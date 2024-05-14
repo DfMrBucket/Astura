@@ -1,0 +1,617 @@
+--astura lmaoo yall got source this isn't even the current version but u can have it bye this is from 2022 ed niggas
+local Fun = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/nightmares.fun-UI-Library/main/source.lua"))()
+local window = Fun.Create("Astura | DEV BUILD | v1.101")
+local tab = window:Tab("Legit")
+local section = tab:Section("Camlock")
+section:Toggle("Enabled (Q)", function(s)
+   --Astura Camlock
+   getgenv().OldAimPart = "HumanoidRootPart"
+getgenv().AimPart = "HumanoidRootPart" -- For R15 Games: {UpperTorso, LowerTorso, HumanoidRootPart, Head} | For R6 Games: {Head, Torso, HumanoidRootPart}  
+    getgenv().AimlockKey = "q"
+    getgenv().AimRadius = 500 -- How far away from someones character you want to lock on at
+    getgenv().ThirdPerson = true 
+    getgenv().FirstPerson = true
+    getgenv().TeamCheck = false -- Check if Target is on your Team (True means it wont lock onto your teamates, false is vice versa) (Set it to false if there are no teams)
+    getgenv().PredictMovement = true -- Predicts if they are moving in fast velocity (like jumping) so the aimbot will go a bit faster to match their speed 
+    getgenv().PredictionVelocity = 7.22
+    getgenv().CheckIfJumped = true
+    getgenv().Smoothness = false
+    getgenv().SmoothnessAmount = 0.2
+ 
+    local Players, Uis, RService, SGui = game:GetService"Players", game:GetService"UserInputService", game:GetService"RunService", game:GetService"StarterGui";
+    local Client, Mouse, Camera, CF, RNew, Vec3, Vec2 = Players.LocalPlayer, Players.LocalPlayer:GetMouse(), workspace.CurrentCamera, CFrame.new, Ray.new, Vector3.new, Vector2.new;
+    local Aimlock, MousePressed, CanNotify = true, false, false;
+    local AimlockTarget;
+    local OldPre;
+ 
+ 
+ 
+    getgenv().WorldToViewportPoint = function(P)
+        return Camera:WorldToViewportPoint(P)
+    end
+ 
+    getgenv().WorldToScreenPoint = function(P)
+        return Camera.WorldToScreenPoint(Camera, P)
+    end
+ 
+    getgenv().GetObscuringObjects = function(T)
+        if T and T:FindFirstChild(getgenv().AimPart) and Client and Client.Character:FindFirstChild("Head") then 
+            local RayPos = workspace:FindPartOnRay(RNew(
+                T[getgenv().AimPart].Position, Client.Character.Head.Position)
+            )
+            if RayPos then return RayPos:IsDescendantOf(T) end
+        end
+    end
+ 
+    getgenv().GetNearestTarget = function()
+        -- Credits to whoever made this, i didnt make it, and my own mouse2plr function kinda sucks
+        local players = {}
+        local PLAYER_HOLD  = {}
+        local DISTANCES = {}
+        for i, v in pairs(Players:GetPlayers()) do
+            if v ~= Client then
+                table.insert(players, v)
+            end
+        end
+        for i, v in pairs(players) do
+            if v.Character ~= nil then
+                local AIM = v.Character:FindFirstChild("Head")
+                if getgenv().TeamCheck == true and v.Team ~= Client.Team then
+                    local DISTANCE = (v.Character:FindFirstChild("Head").Position - game.Workspace.CurrentCamera.CFrame.p).magnitude
+                    local RAY = Ray.new(game.Workspace.CurrentCamera.CFrame.p, (Mouse.Hit.p - game.Workspace.CurrentCamera.CFrame.p).unit * DISTANCE)
+                    local HIT,POS = game.Workspace:FindPartOnRay(RAY, game.Workspace)
+                    local DIFF = math.floor((POS - AIM.Position).magnitude)
+                    PLAYER_HOLD[v.Name .. i] = {}
+                    PLAYER_HOLD[v.Name .. i].dist= DISTANCE
+                    PLAYER_HOLD[v.Name .. i].plr = v
+                    PLAYER_HOLD[v.Name .. i].diff = DIFF
+                    table.insert(DISTANCES, DIFF)
+                elseif getgenv().TeamCheck == false and v.Team == Client.Team then 
+                    local DISTANCE = (v.Character:FindFirstChild("Head").Position - game.Workspace.CurrentCamera.CFrame.p).magnitude
+                    local RAY = Ray.new(game.Workspace.CurrentCamera.CFrame.p, (Mouse.Hit.p - game.Workspace.CurrentCamera.CFrame.p).unit * DISTANCE)
+                    local HIT,POS = game.Workspace:FindPartOnRay(RAY, game.Workspace)
+                    local DIFF = math.floor((POS - AIM.Position).magnitude)
+                    PLAYER_HOLD[v.Name .. i] = {}
+                    PLAYER_HOLD[v.Name .. i].dist= DISTANCE
+                    PLAYER_HOLD[v.Name .. i].plr = v
+                    PLAYER_HOLD[v.Name .. i].diff = DIFF
+                    table.insert(DISTANCES, DIFF)
+                end
+            end
+        end
+ 
+        if unpack(DISTANCES) == nil then
+            return nil
+        end
+ 
+        local L_DISTANCE = math.floor(math.min(unpack(DISTANCES)))
+        if L_DISTANCE > getgenv().AimRadius then
+            return nil
+        end
+ 
+        for i, v in pairs(PLAYER_HOLD) do
+            if v.diff == L_DISTANCE then
+                return v.plr
+            end
+        end
+        return nil
+    end
+ 
+    Mouse.KeyDown:Connect(function(a)
+        if not (Uis:GetFocusedTextBox()) then 
+            if a == AimlockKey and AimlockTarget == nil then
+                pcall(function()
+                    if MousePressed ~= true then MousePressed = true end 
+                    local Target;Target = GetNearestTarget()
+                    if Target ~= nil then 
+                        AimlockTarget = Target
+                    end
+                end)
+            elseif a == AimlockKey and AimlockTarget ~= nil then
+                if AimlockTarget ~= nil then AimlockTarget = nil end
+                if MousePressed ~= false then 
+                    MousePressed = false 
+                end
+            end
+        end
+    end)
+ 
+    RService.RenderStepped:Connect(function()
+        if getgenv().ThirdPerson == true and getgenv().FirstPerson == true then 
+            if (Camera.Focus.p - Camera.CoordinateFrame.p).Magnitude > 1 or (Camera.Focus.p - Camera.CoordinateFrame.p).Magnitude <= 1 then 
+                CanNotify = true 
+            else 
+                CanNotify = false 
+            end
+        elseif getgenv().ThirdPerson == true and getgenv().FirstPerson == false then 
+            if (Camera.Focus.p - Camera.CoordinateFrame.p).Magnitude > 1 then 
+                CanNotify = true 
+            else 
+                CanNotify = false 
+            end
+        elseif getgenv().ThirdPerson == false and getgenv().FirstPerson == true then 
+            if (Camera.Focus.p - Camera.CoordinateFrame.p).Magnitude <= 1 then 
+                CanNotify = true 
+            else 
+                CanNotify = false 
+            end
+        end
+        if Aimlock == true and MousePressed == true then 
+            if AimlockTarget and AimlockTarget.Character and AimlockTarget.Character:FindFirstChild(getgenv().AimPart) then 
+                if getgenv().FirstPerson == true then
+                    if CanNotify == true then
+                        if getgenv().PredictMovement == true then
+                            if getgenv().Smoothness == true then
+                                --// The part we're going to lerp/smoothen \\--
+                                local Main = CF(Camera.CFrame.p, AimlockTarget.Character[getgenv().AimPart].Position + AimlockTarget.Character[getgenv().AimPart].Velocity/PredictionVelocity)
+ 
+                                --// Making it work \\--
+                                Camera.CFrame = Camera.CFrame:Lerp(Main, getgenv().SmoothnessAmount, Enum.EasingStyle.Elastic, Enum.EasingDirection.InOut)
+                            else
+                                Camera.CFrame = CF(Camera.CFrame.p, AimlockTarget.Character[getgenv().AimPart].Position + AimlockTarget.Character[getgenv().AimPart].Velocity/PredictionVelocity)
+                            end
+                        elseif getgenv().PredictMovement == false then 
+                            if getgenv().Smoothness == true then
+                                --// The part we're going to lerp/smoothen \\--
+                                local Main = CF(Camera.CFrame.p, AimlockTarget.Character[getgenv().AimPart].Position)
+ 
+                                --// Making it work \\--
+                                Camera.CFrame = Camera.CFrame:Lerp(Main, getgenv().SmoothnessAmount, Enum.EasingStyle.Elastic, Enum.EasingDirection.InOut)
+                            else
+                                Camera.CFrame = CF(Camera.CFrame.p, AimlockTarget.Character[getgenv().AimPart].Position)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+         if CheckIfJumped == true then
+       if AimlockTarget.Character.HuDDDDDDDDDDWmanoid.FloorMaterial == Enum.Material.Air then
+ 
+           getgenv().AimPart = "HumanoidRootPart"
+       else
+         getgenv().AimPart = getgenv().OldAimPart
+ 
+       end
+    end
+end)
+end)
+section:Dropdown("Key", {"e", "c", "q"}, function()
+   
+end)
+local section = tab:Section("Slient Aim")
+section:Toggle("Enabled", function(s)
+   getgenv().Delusion = {
+    Silent = {
+        ["Enabled"] = true,
+        ["Part"] = "HumanoidRootPart",
+        ["PredictionAmount"] = 0.119,
+        ["NearestPoint"] = true
+    },
+    FOV = {
+        ["Visible"] = true,
+        ["Filled"] = false,
+        ["Radius"] = 100,
+        ["Rainbow"] = false
+    },
+    Resolver = {
+        ["Enabled"] = true,
+        ["AntiAimViewer"] = true,
+        ["AntiGroundShots"] = false
+    },
+    Tracer = {
+        ["Key"] = "C",
+        ["Aimpart"] = "Head",
+        ["Enabled"] = true,
+        ["Prediction"] = 0.025,
+        ["Smoothness"] = 0.0978334,
+    },
+    AutoSilentPrediction = {
+        ["Enabled"] = true,
+        ["Amount_150"] = 0.163,
+        ["Amount_140"] = 0.132,
+        ["Amount_130"] = 0.172,
+        ["Amount_127"] = 0.127,
+        ["Amount_135"] = 0.135,
+        ["Amount_120"] = 0.133,
+        ["Amount_110"] = 0.184,
+        ["Amount_100"] = 0.145,
+        ["Amount_90"] = 0.149,
+        ["Amount_80"] = 0.139,
+        ["Amount_70"] = 0.154,
+        ["Amount_60"] = 0.196,
+        ["Amount_50"] = 0.1227
+    },
+    Checks = {
+        ["Wall_Check"] = true,
+        ["Crew_Check"] = false
+    }
+}
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+local Players, Client, Mouse, RS, Camera =
+    game:GetService("Players"),
+    game:GetService("Players").LocalPlayer,
+    game:GetService("Players").LocalPlayer:GetMouse(),
+    game:GetService("RunService"),
+    game.Workspace.CurrentCamera
+local players = game:GetService("Players")
+local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+
+local Circle = Drawing.new("Circle")
+Circle.Color = Color3.new(1, 1, 1)
+Circle.Thickness = 1
+local UpdateFOV = function()
+    if (not Circle) then
+        return Circle
+    end
+
+    Circle.Visible = Delusion.FOV["Visible"]
+    Circle.Filled = Delusion.FOV["Filled"]
+    Circle.Radius = Delusion.FOV["Radius"] * 3
+    Circle.Position = Vector2.new(Mouse.X, Mouse.Y + (game:GetService("GuiService"):GetGuiInset().Y))
+
+    if Delusion.FOV.Rainbow == true then
+        local hue = tick() % 5 / 5
+        Circle.Color = Color3.fromHSV(hue, 1, 1)
+    else
+        Circle.Color = Color3.new(0, 255, 255)
+    end
+
+    return Circle
+end
+
+RS.Heartbeat:Connect(UpdateFOV)
+
+ClosestPlrFromMouse = function()
+    local Target, Closest = nil, 1 / 0
+
+    for _, v in pairs(Players:GetPlayers()) do
+        if (v.Character and v ~= Client and v.Character:FindFirstChild("HumanoidRootPart")) then
+            local Position, OnScreen = Camera:WorldToScreenPoint(v.Character.HumanoidRootPart.Position)
+            local Distance = (Vector2.new(Position.X, Position.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+
+            if (Circle.Radius > Distance and Distance < Closest and OnScreen) then
+                Closest = Distance
+                Target = v
+            end
+        end
+    end
+    return Target
+end
+
+local WTS = function(Object)
+    local ObjectVector = Camera:WorldToScreenPoint(Object.Position)
+    return Vector2.new(ObjectVector.X, ObjectVector.Y)
+end
+
+local IsOnScreen = function(Object)
+    local IsOnScreen = Camera:WorldToScreenPoint(Object.Position)
+    return IsOnScreen
+end
+
+local FilterObjs = function(Object)
+    if string.find(Object.Name, "Gun") then
+        return
+    end
+    if table.find({"Part", "MeshPart", "BasePart"}, Object.ClassName) then
+        return true
+    end
+end
+
+local GetClosestBodyPart = function(character)
+    local ClosestDistance = 1 / 0
+    local BodyPart = nil
+    if (character and character:GetChildren()) then
+        for _, x in next, character:GetChildren() do
+            if FilterObjs(x) and IsOnScreen(x) then
+                local Distance = (WTS(x) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+                if (Circle.Radius > Distance and Distance < ClosestDistance) then
+                    ClosestDistance = Distance
+                    BodyPart = x
+                end
+            end
+        end
+    end
+    return BodyPart
+end
+local Prey
+
+task.spawn(
+    function()
+        while task.wait() do
+            if Prey then
+                if Delusion.Silent.Enabled and Delusion.Silent.NearestPoint == true then
+                    Delusion.Silent["Part"] = tostring(GetClosestBodyPart(Prey.Character))
+                end
+            end
+        end
+    end
+)
+
+local grmt = getrawmetatable(game)
+local backupindex = grmt.__index
+setreadonly(grmt, false)
+
+grmt.__index =
+    newcclosure(
+    function(self, v)
+        if (Delusion.Silent.Enabled and Mouse and tostring(v) == "Hit") then
+            Prey = ClosestPlrFromMouse()
+
+            if Prey then
+                local endpoint =
+                    game.Players[tostring(Prey)].Character[Delusion.Silent["Part"]].CFrame +
+                    (game.Players[tostring(Prey)].Character[Delusion.Silent["Part"]].Velocity *
+                        Delusion.Silent.PredictionAmount)
+                return (tostring(v) == "Hit" and endpoint)
+            end
+        end
+        return backupindex(self, v)
+    end
+)
+
+if getgenv().Delusion.Resolver.AntiAimViewer == true then
+    local d = 1000
+    local bama = nil
+    local vec2 = nil
+
+    for _, player in pairs(players:GetPlayers()) do
+        if
+            player ~= players.LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and
+                player.Character:FindFirstChild("HumanoidRootPart")
+         then
+            local cam = workspace.CurrentCamera:WorldToViewportPoint(player.Character.PrimaryPart.Position)
+            local vector = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(cam.X, cam.Y)).Magnitude
+            if vector > d then
+                bama = player
+                vec2 = vector
+            end
+        end
+    end
+    return bama
+end
+if
+    getgenv().Delusion.Resolver.AntiGroundShots == true and
+        Prey.Character:FindFirstChild("Humanoid") == Enum.HumanoidStateType.Freefall
+ then
+    pcall(
+        function()
+            local TargetVelv5 = targ.Character[getgenv().partlol]
+            TargetVelv5.Velocity =
+                Vector3.new(TargetVelv5.Velocity.X, (TargetVelv5.Velocity.Y * 5), TargetVelv5.Velocity.Z)
+            TargetVelv5.AssemblyLinearVelocity =
+                Vector3.new(TargetVelv5.Velocity.X, (TargetVelv5.Velocity.Y * 5), TargetVelv5.Velocity.Z)
+        end
+    )
+end
+if getgenv().Delusion.Resolver.Enabled == true then
+    pcall(
+        function()
+            local TargetVelv2 = Prey.Character.HumanoidRootPart
+            TargetVelv2.Velocity = Vector3.new(TargetVelv2.Velocity.X, 0, TargetVelv2.Velocity.Z)
+            TargetVelv2.AssemblyLinearVelocity = Vector3.new(TargetVelv2.Velocity.X, 0, TargetVelv2.Velocity.Z)
+        end
+    )
+end
+if getgenv().Delusion.AutoSilentPrediction.Enabled == true then
+    local pingvalue = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()
+    local split = string.split(pingvalue, "(")
+    local ping = tonumber(split[1])
+    if ping < 150 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_150
+    elseif ping < 140 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_140
+    elseif ping < 130 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_130
+    elseif ping < 120 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_120
+    elseif ping < 110 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_110
+    elseif ping < 100 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_100
+    elseif ping < 90 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_90
+    elseif ping < 80 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_80
+    elseif ping < 70 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_70
+    elseif ping < 60 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_60
+    elseif ping < 50 then
+        getgenv().Delusion.Silent.PredictionAmount = getgenv().Delusion.AutoSilentPrediction.Amount_50
+    end
+end
+if getgenv().Delusion.Checks.Wall_Check then
+    local Origin = Camera.CFrame.p
+    local CheckRay = Ray.new(Origin, destination - Origin)
+    local Hit = game.workspace:FindPartOnRayWithIgnoreList(CheckRay, ignore)
+    return Hit == nil
+else
+    return true
+end
+if getgenv().Delusion.Checks.Crew_Check == true then
+    while true do
+        local newPlayer = game.Players.PlayerAdded:wait()
+        if player:IsInGroup(newPlayer.Group) then
+            table.insert(Ignored.Players, newPlayer)
+        end
+    end
+end
+Mouse.KeyDown:Connect(function(Key)
+    local Keybind = getgenv().Delusion.Tracer.Key:lower()
+    if (Key == Keybind) then
+        if getgenv().Delusion.Tracer.Enabled == true then
+            IsTargetting = not IsTargetting
+            if IsTargetting then
+                Plr = GetClosest()
+            else
+                if Plr ~= nil then
+                    Plr = nil
+                end
+            end
+        end
+    end
+end)
+game.RunService.Heartbeat:Connect(function()
+        if getgenv().Delusion.Misc.Shake then
+            local Main = CFrame.new(Camera.CFrame.p,Plr.Character[Delusion.Tracer.Aimpart].Position + Plr.Character[Delusion.Tracer.Aimpart].Velocity * getgenv().Delusion.Tracer.Prediction +
+            Vector3.new(
+                math.random(-getgenv().Delusion.Misc.ShakeValue, getgenv().Delusion.Misc.ShakeValue),
+                math.random(-getgenv().Delusion.Misc.ShakeValue, getgenv().Delusion.Misc.ShakeValue),
+                math.random(-getgenv().Delusion.Misc.ShakeValue, getgenv().Delusion.Misc.ShakeValue)
+            ) * 0.1)
+            Camera.CFrame = Camera.CFrame:Lerp(Main, getgenv().Delusion.Tracer.Smoothness, Enum.EasingStyle.Elastic, Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+        else
+            local Main = CFrame.new(Camera.CFrame.p,Plr.Character[getgenv().Delusion.Tracer.Aimpart].Position + Plr.Character[Delusion.Tracer.Aimpart].Velocity * getgenv().Delusion.Tracer.Prediction)
+            Camera.CFrame = Camera.CFrame:Lerp(Main, getgenv().Delusion.Tracer.Smoothness, Enum.EasingStyle.Elastic, Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+        end
+end)
+
+task.spawn(function()
+    while task.wait() do
+        if getgenv().Delusion.Tracer.Enabled and Plr ~= nil and (Plr.Character) then
+            getgenv().Delusion.Tracer.Aimpart = tostring(GetNearestPartToCursorOnCharacter(Plr.Character))
+        end
+    end
+end)
+end)
+local tab = window:Tab("Rage")
+local section = tab:Section("Aimlock")
+section:Toggle("Lock (C)", function(s)
+   local settings = {
+    main = {
+        DotEnabled = true, -- leave this true thusky pooh ;)
+        Prediction = 0.146,
+        Part = "LowerTorso",
+        Key = "c",
+        Notifications = true,
+        AirshotFunc = false
+    },
+    Dot = {
+        Show = true,
+        Color = Color3.fromRGB(128, 0, 128),
+        Size = Vector3.new(0.9, 1.2, 0.9)
+    }
+}
+
+
+
+
+
+
+local CurrentCamera = game:GetService "Workspace".CurrentCamera
+local Mouse = game.Players.LocalPlayer:GetMouse()
+local RunService = game:GetService("RunService")
+local Plr = game.Players.LocalPlayer
+
+local Part = Instance.new("Part", game.Workspace)
+Part.Anchored = true
+Part.CanCollide = false
+Part.Parent = game.Workspace
+Part.Shape = Enum.PartType.Ball
+Part.Size = settings.Dot.Size
+Part.Color = settings.Dot.Color
+
+if settings.Dot.Show == true then
+    Part.Transparency = 0
+else
+    Part.Transparency = 1
+end
+
+Mouse.KeyDown:Connect(function(KeyPressed)
+    if KeyPressed == (settings.main.Key) then
+        if settings.main.DotEnabled == true then
+            settings.main.DotEnabled = false
+            if settings.main.Notifications == true then
+                Plr = FindClosestUser()
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "Astura Script",
+                    Text = "No longer locked on"
+                })
+            end
+        else
+            Plr = FindClosestUser()
+            settings.main.DotEnabled = true
+            if settings.main.Notifications == true then
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "Astura Script",
+                    Text = "Locked on to:" .. tostring(Plr.Character.Humanoid.DisplayName)
+                })
+            end
+        end
+    end
+end)
+
+function FindClosestUser()
+    local closestPlayer
+    local shortestDistance = math.huge
+
+    for i, v in pairs(game.Players:GetPlayers()) do
+        if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and
+            v.Character.Humanoid.Health ~= 0 and v.Character:FindFirstChild("HumanoidRootPart") then
+            local pos = CurrentCamera:WorldToViewportPoint(v.Character.PrimaryPart.Position)
+            local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(Mouse.X, Mouse.Y)).magnitude
+            if magnitude < shortestDistance then
+                closestPlayer = v
+                shortestDistance = magnitude
+            end
+        end
+    end
+    return closestPlayer
+end
+
+RunService.Stepped:connect(function()
+    if settings.main.DotEnabled and Plr.Character and Plr.Character:FindFirstChild("LowerTorso") then
+        Part.CFrame = CFrame.new(Plr.Character[settings.main.Part].Position +
+                                     (Plr.Character.LowerTorso.Velocity * settings.main.Prediction))
+    else
+        Part.CFrame = CFrame.new(0, 9999, 0)
+
+    end
+end)
+
+local mt = getrawmetatable(game)
+local old = mt.__namecall
+setreadonly(mt, false)
+mt.__namecall = newcclosure(function(...)
+    local args = {...}
+    if settings.main.DotEnabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePos" then
+        args[3] = Plr.Character[settings.main.Part].Position +
+                      (Plr.Character[settings.main.Part].Velocity * settings.main.Prediction)
+        return old(unpack(args))
+    end
+    return old(...)
+end)
+
+
+if settings.main.AirshotFunc == true then
+    if Plr.Character.Humanoid.Jump == true and Plr.Character.Humanoid.FloorMaterial == Enum.Material.Air then
+        settings.main.Part = "RightFoot"
+    else
+        Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old,new)
+            if new == Enum.HumanoidStateType.Freefall then
+                settings.main.Part = "RightFoot"
+            else
+                settings.main.Part = "LowerTorso"
+            end
+        end)
+    end
+end
+
+
+end)
+local section = tab:Section("Target Strafe")
+section:Toggle("Enabled (H)", function(s)
+   getgenv().u = true
+
+local target = "Player Name"
+
+while getgenv().u == true do
+    task.wait()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = game.Players[target].Character.HumanoidRootPart.CFrame * CFrame.new(0, 8, 0)
+game.Players.LocalPlayer.Character.Humanoid.Sit = true
+end 
+end)
